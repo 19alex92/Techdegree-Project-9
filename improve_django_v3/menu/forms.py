@@ -18,11 +18,13 @@ class MenuForm(forms.ModelForm):
         for _ in items:
             count += 1
         if count <= 1:
-            raise forms.ValidationError("Choose at least two items for the menu")
+            raise forms.ValidationError("Choose at least two"
+                                        " items for the menu")
         return items
 
     def clean_season(self):
         season = self.cleaned_data['season']
         if len(season) < 4:
-            raise forms.ValidationError("The season name must at least be 4 characters long")
+            raise forms.ValidationError("The season name must at least"
+                                        " be 4 characters long")
         return season
