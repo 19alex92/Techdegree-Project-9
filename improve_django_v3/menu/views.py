@@ -1,14 +1,20 @@
+from django.contrib import messages
+from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import Http404
 from django.utils import timezone
-from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
+
 from .models import *
 from .forms import *
 
 
 def menu_list(request):
-    menus = Menu.objects.all().prefetch_related('items')
+    menu = Menu.objects.all().prefetch_related('items')
+    paginator = Paginator(menu, 5)
+
+    page = request.GET.get('page')
+    menus = paginator.get_page(page)
     return render(request, 'menu/list_all_current_menus.html',
                   {'menus': menus})
 
@@ -33,7 +39,9 @@ def create_new_menu(request):
             menu = form.save(commit=False)
             menu.created_date = timezone.now()
             menu.save()
-            return redirect('menu_detail', pk=menu.pk)
+            return redirect('menu:menu_detail', pk=menu.pk)
+        else:
+            messages.error(request, 'Please correct the error')
     else:
         form = MenuForm()
     return render(request, 'menu/menu_edit.html', {'form': form})
@@ -41,15 +49,14 @@ def create_new_menu(request):
 
 def edit_menu(request, pk):
     menu = get_object_or_404(Menu, pk=pk)
-    items = Item.objects.all()
+    form = MenuForm(instance=menu)
     if request.method == "POST":
-        menu.season = request.POST.get('season', '')
-        menu.expiration_date = datetime.strptime(request.POST.get('expiration_date', ''),
-                                                 '%m/%d/%Y')
-        menu.items = request.POST.get('items', '')
-        menu.save()
+        form = MenuForm(request.POST, instance=menu)
+        if form.is_valid():
+            menu = form.save()
+            return redirect('menu:menu_detail', pk=menu.pk)
 
-    return render(request, 'menu/change_menu.html', {
+    return render(request, 'menu/menu_edit.html', {
         'menu': menu,
-        'items': items,
+        'form': form,
         })
