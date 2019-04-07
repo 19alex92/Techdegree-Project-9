@@ -36,9 +36,7 @@ def create_new_menu(request):
     if request.method == "POST":
         form = MenuForm(request.POST)
         if form.is_valid():
-            menu = form.save(commit=False)
-            menu.created_date = timezone.now()
-            menu.save()
+            menu = form.save()
             return redirect('menu:menu_detail', pk=menu.pk)
         else:
             messages.error(request, 'Please correct the error')
